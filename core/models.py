@@ -1,29 +1,70 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from typing import List, Optional
+
+@dataclass
+class VideoFile:
+    """
+    Representasi data teknis dari sebuah berkas video.
+
+    Memuat rincian spesifik seperti nama tampilan, ukuran, durasi, dan 
+    tautan pratinjau (thumbnail) untuk kebutuhan antarmuka.
+
+    Args:
+        display_name (str): Nama judul video yang akan ditampilkan.
+        size (int): Ukuran berkas video dalam satuan bita.
+        duration (int): Durasi total video dalam satuan detik.
+        id (str): Identitas unik berkas di dalam sistem.
+        thumbnail (str): Tautan URL menuju gambar pratinjau video.
+    """
+    display_name: str
+    size: int
+    duration: int
+    id: str
+    thumbnail: str
+    type: Optional[str] = None
+    update_time: Optional[int] = None
+    collage_screenshots: Optional[List[str]] = field(default_factory=list)
 
 @dataclass
 class VideoMetadata:
     """
-    Menyimpan informasi identitas dasar dari sebuah video.
+    Struktur data lengkap untuk metadata konten video.
 
-    Kelas ini digunakan untuk mengelola data teknis video seperti ID unik
-    dan identitas file dalam sistem.
+    Mengelompokkan identitas sesi (suid) beserta daftar berkas video 
+    terkait dan informasi tambahan dari sisi server.
 
     Args:
-        suid (str): Identitas unik sesi atau pengguna (Short Unique ID).
-        file_id (str): Kode unik yang merujuk pada file video tertentu.
+        suid (str): Identitas unik sesi atau pengguna.
+        files (List[VideoFile]): Daftar objek VideoFile yang tersedia.
     """
     suid: str
-    file_id: str
+    files: List[VideoFile]
+    ip_country: Optional[str] = None
+    player_theme: Optional[str] = None
+    slink: Optional[str] = None
+    sid: Optional[str] = None
 
-@dataclass
-class DecryptedAsset:
-    """
-    Representasi data aset yang telah berhasil didekripsi.
+    @classmethod
+    def from_dict(cls, data: dict) -> 'VideoMetadata':
+        """
+        Mengonversi data kamus (dictionary) menjadi objek VideoMetadata.
 
-    Menyediakan akses langsung ke URL konten yang siap untuk digunakan
-    atau ditampilkan pada aplikasi.
+        Fungsi ini memudahkan pemrosesan data mentah hasil respons API 
+        menjadi struktur objek yang rapi dan terukur.
 
-    Args:
-        embed_url (str): Alamat URL sematan untuk memutar atau mengakses aset.
-    """
-    embed_url: str
+        Args:
+            data (dict): Data mentah dalam format dictionary dari API.
+
+        Returns:
+            VideoMetadata: Objek yang telah terisi data secara otomatis.
+        """
+        files_data = data.get('files', [])
+        video_files = [VideoFile(**file_data) for file_data in files_data]
+        return cls(
+            suid=data.get('suid'),
+            files=video_files,
+            ip_country=data.get('ip_country'),
+            player_theme=data.get('player_theme'),
+            slink=data.get('slink'),
+            sid=data.get('sid')
+        )
