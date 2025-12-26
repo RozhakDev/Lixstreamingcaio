@@ -1,0 +1,4 @@
+requests
+flet
+pycryptodome
+cryptography
